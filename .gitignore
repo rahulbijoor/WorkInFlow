@@ -1,0 +1,51 @@
+.env
+.env.*
+!.env.example
+
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# Test/typing caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pytype/
+htmlcov/
+.coverage*
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Env/secrets
+.env
+.env.*
+!.env.example
+
+# Local DBs (optional—safe to ignore for dev)
+*.sqlite3
+chroma/
+
+# Editors/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Python bytecode & caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OAuth / API secrets & tokens
+credentials.json
+client_secret.json
+token.json
+tokens.json
+
+# safer catch-alls
+**/*credentials*.json
+**/*token*.json
+.secrets/

@@ -1,0 +1,5 @@
+Project planning notes:
+- Decision: Ship MVP by Sept 1
+- Blocking risk: auth
+- Owners: Rahul (PM), Anita (Eng)
+
