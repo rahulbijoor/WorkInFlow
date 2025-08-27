@@ -1,0 +1,23 @@
+[project]
+name = "research_assistant___hypothesis_discovery_paper_writing"
+version = "0.1.0"
+description = "research_assistant___hypothesis_discovery_paper_writing using crewAI"
+authors = [{ name = "Your Name", email = "you@example.com" }]
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "crewai[tools]>=0.150.0,<1.0.0"
+]
+
+[project.scripts]
+research_assistant___hypothesis_discovery_paper_writing = "research_assistant___hypothesis_discovery_paper_writing.main:run"
+run_crew = "research_assistant___hypothesis_discovery_paper_writing.main:run"
+train = "research_assistant___hypothesis_discovery_paper_writing.main:train"
+replay = "research_assistant___hypothesis_discovery_paper_writing.main:replay"
+test = "research_assistant___hypothesis_discovery_paper_writing.main:test"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.crewai]
+type = "crew"

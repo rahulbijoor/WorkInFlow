@@ -1,127 +1,54 @@
-WorkInFlow - AI Research Assistant
+# ResearchAssistantHypothesisDiscoveryPaperWriting Crew
 
-An intelligent research assistant that transforms any research topic into actionable research opportunities or a complete academic paper. Designed for academics, graduate students, and research teams, this automation saves time, reduces costs, and maximizes the impact of research efforts.
+Welcome to the ResearchAssistantHypothesisDiscoveryPaperWriting Crew project, powered by [crewAI](https://crewai.com). This template is designed to help you set up a multi-agent AI system with ease, leveraging the powerful and flexible framework provided by crewAI. Our goal is to enable your agents to collaborate effectively on complex tasks, maximizing their collective intelligence and capabilities.
 
-✨ What It Does
+## Installation
 
-This project provides two adaptive research pathways depending on your needs:
+Ensure you have Python >=3.10 <3.14 installed on your system. This project uses [UV](https://docs.astral.sh/uv/) for dependency management and package handling, offering a seamless setup and execution experience.
 
-🔍 Path 1: Research Discovery Mode
+First, if you haven't already, install uv:
 
-When you don’t have a specific hypothesis yet:
+```bash
+pip install uv
+```
 
-Generates 5–7 testable research hypotheses from any topic
+Next, navigate to your project directory and install the dependencies:
 
-Maps the current research landscape (trends, gaps, debates)
+(Optional) Lock the dependencies and install them by using the CLI command:
+```bash
+crewai install
+```
+### Customizing
 
-Evaluates hypotheses on popularity, impact, feasibility, and novelty
+**Add your `OPENAI_API_KEY` into the `.env` file**
 
-Highlights knowledge gaps and contradictions in existing literature
+- Modify `src/research_assistant___hypothesis_discovery_paper_writing/config/agents.yaml` to define your agents
+- Modify `src/research_assistant___hypothesis_discovery_paper_writing/config/tasks.yaml` to define your tasks
+- Modify `src/research_assistant___hypothesis_discovery_paper_writing/crew.py` to add your own logic, tools and specific args
+- Modify `src/research_assistant___hypothesis_discovery_paper_writing/main.py` to add custom inputs for your agents and tasks
 
-Provides clear justification and feasibility analysis for each direction
+## Running the Project
 
-📝 Path 2: Paper Writing Mode
+To kickstart your crew of AI agents and begin task execution, run this from the root folder of your project:
 
-When you already have a hypothesis:
+```bash
+$ crewai run
+```
 
-Analyzes 15–25 relevant papers with detailed summaries
+This command initializes the research_assistant___hypothesis_discovery_paper_writing Crew, assembling the agents and assigning them tasks as defined in your configuration.
 
-Builds a Related Work section connecting prior studies to your work
+This example, unmodified, will run the create a `report.md` file with the output of a research on LLMs in the root folder.
 
-Designs a rigorous methodology tailored to your hypothesis
+## Understanding Your Crew
 
-Generates results and statistical analyses
+The research_assistant___hypothesis_discovery_paper_writing Crew is composed of multiple AI agents, each with unique roles, goals, and tools. These agents collaborate on a series of tasks, defined in `config/tasks.yaml`, leveraging their collective skills to achieve complex objectives. The `config/agents.yaml` file outlines the capabilities and configurations of each agent in your crew.
 
-Creates a Discussion & Implications section
+## Support
 
-Produces a complete LaTeX manuscript (8–15 pages) formatted for your target journal or conference
+For support, questions, or feedback regarding the ResearchAssistantHypothesisDiscoveryPaperWriting Crew or crewAI.
+- Visit our [documentation](https://docs.crewai.com)
+- Reach out to us through our [GitHub repository](https://github.com/joaomdmoura/crewai)
+- [Join our Discord](https://discord.com/invite/X4JWnZnxPb)
+- [Chat with our docs](https://chatg.pt/DWjSBZn)
 
-🤖 How It Works
-
-The system is powered by a 6-agent research team:
-
-Research Explorer – discovers opportunities or validates hypotheses
-
-Related Work Specialist – finds and summarizes relevant papers
-
-Methodology Expert – designs research protocols
-
-Results Analyst – simulates realistic results and statistical insights
-
-Discussion Writer – contextualizes findings
-
-LaTeX Formatter – outputs publication-ready papers
-
-⚡ Key Benefits
-
-⏳ Saves Time: Cuts literature review and hypothesis framing time by up to 70% (20+ hours saved per project).
-
-💰 Reduces Cost: Projected to save research teams $15K+ annually in redundant exploration and proposal preparation.
-
-📈 Maximizes Impact: Prioritizes hypotheses with the strongest novelty and significance.
-
-✅ Ensures Viability: Evaluates feasibility before investing resources.
-
-🧭 Provides Clarity: Delivers structured, comparable research options.
-
-🛠️ Tech Stack
-
-Backend: Python, FastAPI
-
-AI/LLMs: Open-source LLMs for text analysis and hypothesis generation
-
-Data Sources: arXiv, PubMed Central, institutional repositories (free sources only)
-
-Output: LaTeX, PDF
-
-📦 Installation & Usage
-# Clone the repository
-git clone https://github.com/your-username/research-hypothesis-automation.git
-cd research-hypothesis-automation
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the FastAPI app
-uvicorn app.main:app --reload
-
-
-Open http://127.0.0.1:8000/docs for API documentation.
-
-🎯 Perfect For
-
-Graduate students selecting thesis topics
-
-Researchers exploring new directions
-
-Academic teams brainstorming projects
-
-Grant proposal development
-
-Students learning research methodology
-
-📊 Example Output
-Discovery Mode
-
-Hypothesis 1: … (Impact: 8.5, Feasibility: 9.0, Novelty: 7.8)
-
-Hypothesis 2: … (Impact: 9.2, Feasibility: 8.3, Novelty: 8.1)
-(with detailed justifications and arguments for/against each)
-
-Paper Writing Mode
-
-Complete LaTeX paper with title, abstract, related work, methodology, results, discussion, and references.
-
-📌 Roadmap
-
- Add support for more citation styles (APA, IEEE, Chicago)
-
- Integrate Zotero/Mendeley export for references
-
- Add visualization of research landscape (knowledge graphs)
-
- Extend support to domain-specific corpora (law, economics, etc.)
-
-🏆 Impact
-
-This project has the potential to redefine research workflows by enabling faster, data-driven decision-making in academia. Early tests show 70% reduction in time spent on preliminary research and $15K+ annual savings for medium-sized research groups.
+Let's create wonders together with the power and simplicity of crewAI.

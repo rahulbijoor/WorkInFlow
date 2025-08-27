@@ -1,0 +1,36 @@
+---
+comprehensive_topic_research:
+  description: Conduct comprehensive research on {research_topic} to understand the
+    current state of knowledge, recent developments, ongoing debates, and potential
+    research gaps. Search for recent publications, trending discussions, and identify
+    areas where new research could make meaningful contributions.
+  expected_output: A detailed research landscape report covering current trends, key
+    debates, identified gaps, and emerging opportunities in {research_topic} that
+    could inform hypothesis development.
+  agent: academic_research_specialist
+generate_and_evaluate_research_hypotheses:
+  description: 'Based on the research landscape, generate exactly 5 compelling research
+    hypothesis questions for {research_topic}. For each hypothesis, provide a detailed
+    evaluation using these 4 metrics: 1) Popularity (current interest level), 2) Impact
+    Potential (significance to field), 3) Feasibility (research practicality), and
+    4) Novelty (originality). Assign scores from 1-10 for each metric and explain
+    why each question would make a good research choice.'
+  expected_output: 5 research hypothesis questions for {research_topic}, each with
+    detailed evaluations across 4 metrics (popularity, impact potential, feasibility,
+    novelty), numerical scores (1-10), and comprehensive rationales for why each would
+    be a valuable research pursuit.
+  agent: hypothesis_generator_and_evaluator
+  context:
+  - comprehensive_topic_research
+debate_analysis_for_each_hypothesis:
+  description: For each of the 5 research hypothesis questions, conduct a thorough
+    debate analysis providing compelling arguments both FOR and AGAINST pursuing that
+    research direction. Include potential challenges, counterarguments, methodological
+    concerns, ethical considerations, and alternative perspectives. Present balanced
+    viewpoints that would help a researcher make an informed decision.
+  expected_output: Comprehensive debate analysis for each hypothesis question, presenting
+    well-reasoned arguments for and against each research direction, including potential
+    obstacles, benefits, and strategic considerations for pursuing each line of inquiry.
+  agent: debate_analyst_and_critic
+  context:
+  - generate_and_evaluate_research_hypotheses

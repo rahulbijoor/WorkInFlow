@@ -1,0 +1,103 @@
+---
+research_discovery_hypothesis_exploration:
+  description: |-
+    **If {hypothesis} is empty or not provided:** Conduct comprehensive exploration of {research_topic} to discover 5-7 promising, testable research questions and hypotheses. Search recent papers from arXiv, institutional repositories, and academic websites to identify: (1) knowledge gaps where no one has investigated specific questions, (2) contradictory findings that need resolution, (3) emerging technologies that create new research opportunities, (4) extensions of existing work that haven't been explored. For each potential hypothesis, explain why it's important, feasible, and likely to contribute to the field.
+
+    **If {hypothesis} is provided:** Validate the novelty and significance of the given {hypothesis} by searching for any existing work that may have already addressed this question. Assess its feasibility and potential impact on {research_topic}.
+  expected_output: |-
+    **If no hypothesis provided:** A list of 5-7 promising research hypotheses with detailed explanations of: the specific research question, why it hasn't been answered yet, what makes it feasible, expected contributions to {research_topic}, and preliminary approach considerations.
+
+    **If hypothesis provided:** A validation report assessing the originality, significance, and feasibility of {hypothesis}, including any related work found and recommendations for positioning the research.
+  agent: research_explorer_hypothesis_generator
+related_work_analysis_synthesis:
+  description: 'Find and analyze 15-20 papers directly relevant to {research_topic}
+    and {hypothesis} from arXiv, PubMed Central, Google Scholar, and institutional
+    repositories. For each relevant paper, create a detailed summary including: (1)
+    **What the authors did** - specific methodology, approach, and techniques used,
+    (2) **Key findings** - main results and contributions, (3) **Relation to current
+    work** - how it connects to or differs from {hypothesis}, (4) **Gaps identified**
+    - what wasn''t addressed or could be extended. Then synthesize all individual
+    paper summaries into a cohesive related work section that positions {hypothesis}
+    within the existing literature and clearly articulates the research contribution.'
+  expected_output: 'A comprehensive related work section (2000-3000 words) containing:
+    (1) Individual summaries of 15-20 relevant papers showing what each author did
+    and how it relates to {hypothesis}, (2) Thematic organization of the literature
+    into logical categories, (3) Clear identification of gaps that {hypothesis} addresses,
+    (4) Strong positioning statement showing why this research is needed and novel.
+    Include all papers with proper citation format.'
+  agent: related_work_specialist
+  context:
+  - research_discovery_hypothesis_exploration
+methodology_design:
+  description: "**If {hypothesis} is provided:** Design a comprehensive research methodology
+    to test {hypothesis} within {research_topic}. **If no hypothesis was initially
+    provided:** Use the most promising hypothesis from the Research Discovery task.
+    Develop detailed experimental design including: (1) research approach and justification,
+    (2) data collection methods and protocols, (3) sample size calculations and participant
+    selection criteria, (4) experimental setup and controls, (5) measurement instruments
+    and metrics, (6) statistical analysis plan, (7) validation strategies, (8) ethical
+    considerations, and (9) timeline and resource requirements. Ensure methodology
+    meets standards for {target_venue}."
+  expected_output: A detailed methodology section (1500-2000 words) with clear experimental
+    design, step-by-step protocols, statistical analysis plan, and validation approaches.
+    Include justifications for methodological choices and discussion of how the approach
+    adequately tests {hypothesis}. Present in format suitable for {target_venue}.
+  agent: methodology_expert
+  context:
+  - research_discovery_hypothesis_exploration
+  - related_work_analysis_synthesis
+results_analysis:
+  description: 'Generate comprehensive results and analysis sections for the research
+    hypothesis (either provided as {hypothesis} or selected from the Research Discovery
+    task). Create detailed experimental results including: (1) descriptive statistics
+    and baseline characteristics, (2) primary outcome measures and statistical tests,
+    (3) secondary analyses and subgroup results, (4) data visualizations (tables and
+    figures), (5) statistical significance testing and effect sizes, (6) sensitivity
+    analyses, and (7) objective interpretation of findings. Ensure results directly
+    address the research hypothesis and meet presentation standards for {target_venue}.'
+  expected_output: A complete results section (1000-1500 words) with detailed statistical
+    analyses, properly formatted tables and figures, and objective interpretation
+    of findings. Include clear statements about whether {hypothesis} is supported
+    or rejected based on the evidence, with appropriate statistical reporting standards
+    for {target_venue}.
+  agent: results_analysis_specialist
+  context:
+  - methodology_design
+discussion_conclusions:
+  description: 'Craft comprehensive discussion, conclusions, and future work sections
+    for the research (using either the provided {hypothesis} or the selected hypothesis
+    from Research Discovery). Address: (1) interpretation of results in context of
+    existing literature from the Related Work Analysis, (2) implications for theory
+    and practice, (3) strengths and limitations of the study, (4) potential confounding
+    factors and alternative explanations, (5) generalizability of findings, (6) future
+    research directions, (7) practical applications, and (8) overall conclusions.
+    Ensure tone and depth are appropriate for {target_venue} audience.'
+  expected_output: A thorough discussion and conclusion section (1500-2000 words)
+    that contextualizes findings within the broader literature, discusses implications
+    and limitations thoughtfully, and proposes meaningful future research directions.
+    Include a concise but impactful conclusion that summarizes the contribution of
+    testing {hypothesis} to {research_topic}.
+  agent: discussion_conclusion_expert
+  context:
+  - related_work_analysis_synthesis
+  - results_analysis
+latex_paper_assembly:
+  description: 'Assemble all research components into a publication-ready LaTeX document
+    formatted for {target_venue}. Use either the provided {hypothesis} or the selected
+    hypothesis from Research Discovery. Create the complete paper structure including:
+    (1) compelling title based on the research hypothesis, (2) abstract (250 words
+    max), (3) keywords, (4) introduction section, (5) the detailed related work section
+    from Related Work Analysis, (6) methodology, results, and discussion sections,
+    (7) conclusions and future work, (8) acknowledgments, (9) references in {target_venue}
+    format, and (10) any required appendices. Follow exact formatting guidelines for
+    {target_venue}.'
+  expected_output: A complete LaTeX document (.tex file content) ready for submission
+    to {target_venue}, including all necessary sections, proper formatting, bibliography
+    in correct style, and compliance with page limits and submission guidelines. Also
+    provide separate .bib file content with all references.
+  agent: latex_formatter_journal_specialist
+  context:
+  - related_work_analysis_synthesis
+  - methodology_design
+  - results_analysis
+  - discussion_conclusions
