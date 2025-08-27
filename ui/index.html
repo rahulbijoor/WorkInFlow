@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WorkInFlow — Command Center</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg: #0b1020; --card: #11162a; --muted: #9aa4b2; --ring: #334155; }
+    html, body { height: 100%; }
+    body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; background: linear-gradient(180deg, #0b1020, #0a0f1e); color: #e5e7eb; }
+    .glass { background: rgba(17, 22, 42, 0.6); backdrop-filter: blur(10px); border: 1px solid rgba(148, 163, 184, 0.15); }
+    .chip { border: 1px solid rgba(148,163,184,0.2); padding: 2px 8px; border-radius: 999px; font-size: 12px; }
+    .chip-low { color: #22c55e; border-color: rgba(34,197,94,.4); }
+    .chip-med { color: #f59e0b; border-color: rgba(245,158,11,.4); }
+    .chip-high { color: #ef4444; border-color: rgba(239,68,68,.4); }
+    .divider { height:1px; background: linear-gradient(90deg, transparent, rgba(148,163,184,.2), transparent); }
+    .scroll-smooth { scroll-behavior: smooth; }
+  </style>
+</head>
+<body class="scroll-smooth">
+  <!-- Top Bar -->
+  <header class="glass sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
+      <div class="text-lg font-semibold tracking-wide">⚡ WorkInFlow — Command Center</div>
+      <div class="ml-auto flex items-center gap-2">
+        <label class="text-xs text-slate-300">Backend</label>
+        <input id="apiBase" class="bg-transparent border border-slate-600/60 rounded-lg px-3 py-1 text-sm w-[280px] focus:outline-none focus:ring-2 focus:ring-sky-500" placeholder="http://127.0.0.1:8000" />
+        <button id="saveApiBase" class="px-3 py-1.5 text-sm rounded-lg bg-sky-600 hover:bg-sky-500">Save</button>
+        <button id="btnRefreshAll" class="px-3 py-1.5 text-sm rounded-lg bg-emerald-600 hover:bg-emerald-500">Refresh</button>
+      </div>
+    </div>
+    <div class="divider"></div>
+  </header>
+
+  <!-- Main Layout -->
+  <main class="max-w-7xl mx-auto px-4 py-6 grid grid-cols-12 gap-4">
+    <!-- Left Rail -->
+    <aside class="col-span-12 md:col-span-3 space-y-4">
+      <section class="glass rounded-2xl p-4">
+        <div class="font-semibold mb-3">Sources</div>
+        <div class="flex flex-col gap-2 text-sm">
+          <label class="flex items-center justify-between gap-2">
+            <span>Gmail</span>
+            <span id="countGmail" class="text-xs text-slate-400">0</span>
+          </label>
+          <label class="flex items-center justify-between gap-2">
+            <span>Slack</span>
+            <span id="countSlack" class="text-xs text-slate-400">0</span>
+          </label>
+          <div class="mt-2">
+            <label class="text-xs text-slate-300">Slack Channel IDs (comma-separated)</label>
+            <input id="slackChannels" class="mt-1 w-full bg-transparent border border-slate-600/60 rounded-lg px-3 py-1.5 text-sm" placeholder="C0123ABCD,C0456EFGH" />
+            <button id="btnLoadSlack" class="mt-2 w-full px-3 py-1.5 text-sm rounded-lg bg-fuchsia-600 hover:bg-fuchsia-500">Load Slack</button>
+          </div>
+          <label class="flex items-center justify-between gap-2 mt-3">
+            <span>Tasks (Jira)</span>
+            <span id="countTasks" class="text-xs text-slate-400">0</span>
+          </label>
+        </div>
+      </section>
+
+      <section class="glass rounded-2xl p-4">
+        <div class="font-semibold mb-3">Knowledge Base</div>
+        <div class="space-y-2 text-sm">
+          <div class="flex gap-2">
+            <input id="kbQuery" class="flex-1 bg-transparent border border-slate-600/60 rounded-lg px-3 py-1.5 text-sm" placeholder="Ask your KB…" />
+            <button id="btnAskKB" class="px-3 py-1.5 text-sm rounded-lg bg-sky-600 hover:bg-sky-500">Ask</button>
+          </div>
+          <div id="kbAnswer" class="text-slate-200 text-sm whitespace-pre-wrap"></div>
+          <div id="kbCitations" class="text-xs text-slate-400 space-y-1"></div>
+          <div class="divider my-2"></div>
+          <form id="kbUploadForm" class="space-y-2">
+            <label class="text-xs text-slate-300">Upload file (.txt/.md/.pdf)</label>
+            <input id="kbFile" type="file" class="w-full text-sm" />
+            <button class="w-full px-3 py-1.5 text-sm rounded-lg bg-emerald-600 hover:bg-emerald-500">Upload</button>
+          </form>
+          <form id="kbLinkForm" class="space-y-2 mt-2">
+            <label class="text-xs text-slate-300">Ingest URL</label>
+            <input id="kbUrl" class="w-full bg-transparent border border-slate-600/60 rounded-lg px-3 py-1.5 text-sm" placeholder="https://example.com/article" />
+            <button class="w-full px-3 py-1.5 text-sm rounded-lg bg-emerald-600 hover:bg-emerald-500">Fetch & Index</button>
+          </form>
+        </div>
+      </section>
+    </aside>
+
+    <!-- Main Queue -->
+    <section class="col-span-12 md:col-span-6 space-y-4">
+      <div class="glass rounded-2xl p-4">
+        <div class="flex items-center gap-3">
+          <div class="font-semibold text-lg">Unified Queue</div>
+          <div id="queueMeta" class="text-xs text-slate-400"></div>
+          <div class="ml-auto flex items-center gap-2">
+            <button id="btnLoadGmail" class="px-3 py-1.5 text-sm rounded-lg bg-rose-600/90 hover:bg-rose-500">Load Gmail</button>
+            <button id="btnLoadTasks" class="px-3 py-1.5 text-sm rounded-lg bg-indigo-600/90 hover:bg-indigo-500">Load Tasks</button>
+          </div>
+        </div>
+        <div class="mt-3 overflow-hidden rounded-xl border border-slate-700/50">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-800/60 text-slate-300">
+              <tr>
+                <th class="text-left px-3 py-2 w-20">Source</th>
+                <th class="text-left px-3 py-2">Title / Subject</th>
+                <th class="text-left px-3 py-2">Summary</th>
+                <th class="text-left px-3 py-2 w-44">Signals</th>
+                <th class="text-right px-3 py-2 w-24">Score</th>
+              </tr>
+            </thead>
+            <tbody id="queueBody" class="divide-y divide-slate-800"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Detail Drawer -->
+    <aside class="col-span-12 md:col-span-3 space-y-4">
+      <section class="glass rounded-2xl p-4" id="detailPanel">
+        <div class="font-semibold mb-2">Details</div>
+        <div id="detailEmpty" class="text-sm text-slate-400">Select an item to see details.</div>
+        <div id="detailBody" class="hidden">
+          <div class="text-xs text-slate-400" id="detailSource"></div>
+          <div class="text-lg font-semibold mt-1" id="detailTitle"></div>
+          <div class="text-sm text-slate-300 mt-1" id="detailFrom"></div>
+          <div class="mt-2 text-sm" id="detailSummary"></div>
+          <div class="mt-2 flex flex-wrap gap-2 text-xs" id="detailChips"></div>
+          <div class="mt-2"><a id="detailLink" href="#" target="_blank" class="text-sky-400 hover:underline text-sm"></a></div>
+          <div class="divider my-3"></div>
+
+          <!-- Quick Actions -->
+          <div class="space-y-3">
+            <div>
+              <div class="font-semibold text-sm mb-2">Send to Slack</div>
+              <div class="flex gap-2">
+                <input id="slackTo" class="flex-1 bg-transparent border border-slate-600/60 rounded-lg px-3 py-1.5 text-sm" placeholder="@tom or #general" />
+              </div>
+              <textarea id="slackText" rows="3" class="mt-2 w-full bg-transparent border border-slate-600/60 rounded-lg px-3 py-2 text-sm" placeholder="Type a quick update…"></textarea>
+              <div class="mt-2 flex items-center gap-2">
+                <button id="btnSendSlack" class="px-3 py-1.5 text-sm rounded-lg bg-fuchsia-600 hover:bg-fuchsia-500">Send</button>
+                <div id="slackResult" class="text-xs text-slate-400"></div>
+              </div>
+            </div>
+
+            <div id="jiraActions" class="hidden">
+              <div class="divider my-3"></div>
+              <div class="font-semibold text-sm mb-2">Comment on Jira</div>
+              <textarea id="jiraComment" rows="3" class="w-full bg-transparent border border-slate-600/60 rounded-lg px-3 py-2 text-sm" placeholder="Add a next step…"></textarea>
+              <div class="mt-2 flex items-center gap-2">
+                <button id="btnJiraComment" class="px-3 py-1.5 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-500">Comment</button>
+                <div id="jiraResult" class="text-xs text-slate-400"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="glass rounded-2xl p-4">
+        <div class="font-semibold mb-2">Morning Brief</div>
+        <button id="btnBrief" class="w-full px-3 py-2 text-sm rounded-lg bg-emerald-600 hover:bg-emerald-500">Generate</button>
+        <div id="briefOut" class="text-sm text-slate-200 mt-2 whitespace-pre-wrap"></div>
+      </section>
+    </aside>
+  </main>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 hidden px-4 py-2 rounded-lg bg-slate-900/90 border border-slate-700 text-sm"></div>
+
+  <script>
+    const $ = (sel) => document.querySelector(sel);
+    const apiBaseEl = $('#apiBase');
+    const saveApiBaseBtn = $('#saveApiBase');
+    const btnRefreshAll = $('#btnRefreshAll');
+    const btnLoadGmail = $('#btnLoadGmail');
+    const btnLoadTasks = $('#btnLoadTasks');
+    const btnLoadSlack = $('#btnLoadSlack');
+    const slackChannelsEl = $('#slackChannels');
+
+    const queueBody = $('#queueBody');
+    const queueMeta = $('#queueMeta');
+    const countGmail = $('#countGmail');
+    const countSlack = $('#countSlack');
+    const countTasks = $('#countTasks');
+
+    const detailEmpty = $('#detailEmpty');
+    const detailBody = $('#detailBody');
+    const detailSource = $('#detailSource');
+    const detailTitle = $('#detailTitle');
+    const detailFrom = $('#detailFrom');
+    const detailSummary = $('#detailSummary');
+    const detailChips = $('#detailChips');
+    const detailLink = $('#detailLink');
+    const jiraActions = $('#jiraActions');
+    const jiraComment = $('#jiraComment');
+    const jiraResult = $('#jiraResult');
+    const btnJiraComment = $('#btnJiraComment');
+
+    const slackTo = $('#slackTo');
+    const slackText = $('#slackText');
+    const btnSendSlack = $('#btnSendSlack');
+    const slackResult = $('#slackResult');
+
+    const kbQuery = $('#kbQuery');
+    const kbAnswer = $('#kbAnswer');
+    const kbCitations = $('#kbCitations');
+    const btnAskKB = $('#btnAskKB');
+
+    const kbUploadForm = $('#kbUploadForm');
+    const kbFile = $('#kbFile');
+    const kbLinkForm = $('#kbLinkForm');
+    const kbUrl = $('#kbUrl');
+
+    const btnBrief = $('#btnBrief');
+    const briefOut = $('#briefOut');
+
+    const toastEl = $('#toast');
+
+    let API_BASE = localStorage.getItem('apiBase') || 'http://127.0.0.1:8000';
+    apiBaseEl.value = API_BASE;
+
+    let state = {
+      gmail: [],
+      slack: [],
+      tasks: [],
+      combined: [],
+      selected: null,
+    };
+
+    function toast(msg, ms=1800){
+      toastEl.textContent = msg;
+      toastEl.classList.remove('hidden');
+      setTimeout(() => toastEl.classList.add('hidden'), ms);
+    }
+
+    function lvlChip(lvl){
+      if(!lvl) return '';
+      const l = (''+lvl).toLowerCase();
+      const cls = l==='high' ? 'chip chip-high' : l==='medium' ? 'chip chip-med' : 'chip chip-low';
+      return `<span class="${cls}">${lvl}</span>`;
+    }
+
+    function dueChip(iso){
+      if(!iso) return '';
+      const d = new Date(iso);
+      if(isNaN(d.getTime())) return '';
+      return `<span class="chip border-sky-500/40 text-sky-400">Due ${d.toLocaleString()}</span>`
+    }
+
+    async function api(path, opts){
+      const url = API_BASE + path;
+      const resp = await fetch(url, opts);
+      if(!resp.ok){
+        const t = await resp.text();
+        throw new Error(`HTTP ${resp.status}: ${t}`);
+      }
+      const ct = resp.headers.get('content-type')||'';
+      return ct.includes('application/json') ? resp.json() : resp.text();
+    }
+
+    function unify(){
+      const rows = [];
+      for(const m of state.gmail){
+        rows.push({
+          _type:'gmail',
+          id: m.id,
+          title: m.subject || '(no subject)',
+          from: m.from_ || '',
+          summary: m.ai?.summary_160 || m.snippet || '',
+          importance: m.ai?.importance,
+          urgency: m.ai?.urgency,
+          due: m.ai?.suggested_due_iso,
+          score: m.priority_score || 0,
+          url: m.url || '#',
+          raw: m,
+        });
+      }
+      for(const m of state.slack){
+        rows.push({
+          _type:'slack',
+          id: m.id,
+          title: m.subject || '#channel message',
+          from: m.from_ || '',
+          summary: m.ai?.summary_160 || m.snippet || '',
+          importance: m.ai?.importance,
+          urgency: m.ai?.urgency,
+          due: m.ai?.suggested_due_iso,
+          score: m.priority_score || 0,
+          url: m.url || '#',
+          raw: m,
+        });
+      }
+      for(const t of state.tasks){
+        rows.push({
+          _type:'jira',
+          id: t.id,
+          key: t.key,
+          title: t.title,
+          from: t.project || 'Jira',
+          summary: t.ai?.summary_160 || (t.description||'').slice(0,180),
+          importance: t.ai?.importance,
+          urgency: t.ai?.urgency,
+          due: t.due_iso,
+          score: t.priority_score || 0,
+          url: t.url || '#',
+          raw: t,
+        });
+      }
+      rows.sort((a,b)=> (b.score||0) - (a.score||0));
+      state.combined = rows;
+      renderQueue();
+    }
+
+    function iconFor(type){
+      if(type==='gmail') return '📧';
+      if(type==='slack') return '💬';
+      if(type==='jira') return '🗂️';
+      return '📌';
+    }
+
+    function renderQueue(){
+      countGmail.textContent = state.gmail.length;
+      countSlack.textContent = state.slack.length;
+      countTasks.textContent = state.tasks.length;
+      queueMeta.textContent = `${state.combined.length} items`;
+      queueBody.innerHTML = '';
+      for(const r of state.combined){
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-800/40 cursor-pointer';
+        tr.innerHTML = `
+          <td class="px-3 py-2 text-slate-300">${iconFor(r._type)} ${r._type}</td>
+          <td class="px-3 py-2">
+            <div class="font-medium text-slate-100 line-clamp-1">${escapeHtml(r.title||'')}</div>
+            <div class="text-xs text-slate-400">${escapeHtml(r.from||'')}</div>
+          </td>
+          <td class="px-3 py-2 text-slate-300">${escapeHtml(r.summary||'')}</td>
+          <td class="px-3 py-2">
+            <div class="flex flex-wrap gap-1">${lvlChip(r.importance)} ${lvlChip(r.urgency)} ${dueChip(r.due)}</div>
+          </td>
+          <td class="px-3 py-2 text-right font-semibold">${Number(r.score||0).toFixed(0)}</td>
+        `;
+        tr.addEventListener('click', ()=> selectItem(r));
+        queueBody.appendChild(tr);
+      }
+      if(!state.combined.length){
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="5" class="px-3 py-8 text-center text-slate-400">No items yet — click <b>Load Gmail</b>, <b>Load Slack</b>, or <b>Load Tasks</b>.</td>`
+        queueBody.appendChild(tr);
+      }
+    }
+
+    function selectItem(r){
+      state.selected = r;
+      detailEmpty.classList.add('hidden');
+      detailBody.classList.remove('hidden');
+      detailSource.textContent = `${iconFor(r._type)} ${r._type.toUpperCase()}`;
+      detailTitle.textContent = r.title || '(no title)';
+      detailFrom.textContent = r.from || '';
+      detailSummary.textContent = r.summary || '';
+      detailChips.innerHTML = `${lvlChip(r.importance)} ${lvlChip(r.urgency)} ${dueChip(r.due)}`;
+      detailLink.textContent = r.url ? 'Open in source' : '';
+      detailLink.href = r.url || '#';
+
+      // Prefill action text
+      slackText.value = r._type==='jira' ? `Quick update on ${r.key||r.title}: ${r.summary}` : `Re: ${r.title} — ${r.summary}`;
+      slackResult.textContent = '';
+
+      if(r._type==='jira'){
+        jiraActions.classList.remove('hidden');
+        jiraComment.value = `Next step: ${r.summary}`;
+        jiraResult.textContent = '';
+      } else {
+        jiraActions.classList.add('hidden');
+      }
+    }
+
+    function escapeHtml(str){
+      return (str||'').replace(/[&<>"]+/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s]));
+    }
+
+    // --- Loads ---
+    async function loadGmail(){
+      try {
+        countGmail.textContent = '…';
+        const data = await api('/gmail/recent?max_results=10');
+        state.gmail = Array.isArray(data) ? data : [];
+        toast(`Loaded Gmail: ${state.gmail.length}`);
+        unify();
+      } catch(err){ toast('Gmail error: '+err.message); }
+    }
+
+    async function loadTasks(){
+      try {
+        countTasks.textContent = '…';
+        const data = await api('/pm/tasks?limit_per_provider=20&assignee_me=true');
+        state.tasks = data?.tasks || [];
+        toast(`Loaded Tasks: ${state.tasks.length}`);
+        unify();
+      } catch(err){ toast('Tasks error: '+err.message); }
+    }
+
+    async function loadSlack(){
+      try {
+        countSlack.textContent = '…';
+        const chs = (slackChannelsEl.value||'').split(',').map(s=>s.trim()).filter(Boolean);
+        if(!chs.length){ toast('Enter Slack channel IDs first'); return; }
+        const qs = encodeURIComponent(chs.join(','));
+        const data = await api(`/slack/recent?channels=${qs}&per_channel=25`);
+        state.slack = Array.isArray(data) ? data : [];
+        toast(`Loaded Slack: ${state.slack.length}`);
+        unify();
+      } catch(err){ toast('Slack error: '+err.message); }
+    }
+
+    // --- KB ---
+    async function askKB(){
+      try {
+        kbAnswer.textContent = 'Thinking…';
+        kbCitations.innerHTML = '';
+        const q = kbQuery.value.trim();
+        if(!q){ kbAnswer.textContent=''; return; }
+        const url = `/kb/query?q=${encodeURIComponent(q)}`;
+        const data = await api(url);
+        kbAnswer.textContent = data?.answer || '';
+        const cits = data?.citations||[];
+        kbCitations.innerHTML = cits.map((c,i)=>{
+          const title = escapeHtml(c.title||'Source');
+          const url = c.url ? `<a class="text-sky-400 hover:underline" href="${c.url}" target="_blank">link</a>` : '';
+          const prev = escapeHtml((c.chunk_preview||'').slice(0,160));
+          return `<div>[${i+1}] <b>${title}</b> ${url}<div class="text-slate-500">${prev}</div></div>`
+        }).join('');
+      } catch(err){ kbAnswer.textContent = 'KB error: '+err.message; }
+    }
+
+    kbUploadForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const f = kbFile.files?.[0]; if(!f){ toast('Pick a file first'); return; }
+      const fd = new FormData();
+      fd.append('file', f);
+      try {
+        const resp = await fetch(API_BASE+'/kb/upload', { method:'POST', body: fd });
+        if(!resp.ok) throw new Error(await resp.text());
+        const data = await resp.json();
+        toast('Indexed file: '+(data?.title||'OK'));
+      } catch(err){ toast('Upload error: '+err.message); }
+    });
+
+    kbLinkForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const url = kbUrl.value.trim(); if(!url){ toast('Enter a URL'); return; }
+      const fd = new FormData(); fd.append('url', url);
+      try {
+        const resp = await fetch(API_BASE+'/kb/link', { method:'POST', body: fd });
+        if(!resp.ok) throw new Error(await resp.text());
+        const data = await resp.json();
+        toast('Indexed URL: '+(data?.title||'OK'));
+      } catch(err){ toast('Link error: '+err.message); }
+    });
+
+    // --- Actions ---
+    btnSendSlack.addEventListener('click', async ()=>{
+      const to = slackTo.value.trim();
+      const text = slackText.value.trim();
+      if(!state.selected){ toast('Pick an item first'); return; }
+      if(!to || !text){ toast('Recipient and text required'); return; }
+      try{
+        slackResult.textContent = 'Sending…';
+        const resp = await fetch(API_BASE+'/slack/send', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ to, text })
+        });
+        const data = await resp.json();
+        const ok = Array.isArray(data.deliveries) && data.deliveries[0]?.ok;
+        const link = data.deliveries?.[0]?.permalink;
+        slackResult.innerHTML = ok ? (`Sent ✓ ${link?`<a class='text-sky-400 underline' target='_blank' href='${link}'>open</a>`:''}`) : ('Failed: '+(data.deliveries?.[0]?.error || resp.status));
+        toast(ok ? 'Slack message sent' : 'Slack send failed');
+      }catch(err){ slackResult.textContent = 'Error: '+err.message; }
+    });
+
+    btnJiraComment.addEventListener('click', async ()=>{
+      if(!state.selected || state.selected._type!=='jira'){ toast('Select a Jira task'); return; }
+      const text = jiraComment.value.trim(); if(!text){ toast('Enter a comment'); return; }
+      const issue = state.selected.key || state.selected.id;
+      try{
+        jiraResult.textContent = 'Posting…';
+        const resp = await fetch(`${API_BASE}/pm/jira/${encodeURIComponent(issue)}/comment`, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: new URLSearchParams({text}) });
+        const ok = resp.ok; const j = ok ? await resp.json() : await resp.text();
+        jiraResult.textContent = ok ? 'Comment added ✓' : ('Failed: '+j);
+        toast(ok ? 'Jira comment added' : 'Jira comment failed');
+      }catch(err){ jiraResult.textContent = 'Error: '+err.message; }
+    });
+
+    // Morning brief (simple summarizer from queued items)
+    btnBrief.addEventListener('click', ()=>{
+      const top = state.combined.slice(0,5);
+      if(!top.length){ briefOut.textContent = 'No items loaded.'; return; }
+      const lines = top.map((r,i)=> `${i+1}. [${r._type.toUpperCase()}] ${r.title} — ${r.summary}`);
+      briefOut.textContent = lines.join('\n');
+    });
+
+    // Controls
+    saveApiBaseBtn.addEventListener('click', ()=>{
+      API_BASE = apiBaseEl.value.trim() || API_BASE;
+      localStorage.setItem('apiBase', API_BASE);
+      toast('Saved backend URL');
+    });
+
+    btnAskKB.addEventListener('click', askKB);
+    btnLoadGmail.addEventListener('click', loadGmail);
+    btnLoadTasks.addEventListener('click', loadTasks);
+    btnLoadSlack.addEventListener('click', loadSlack);
+    btnRefreshAll.addEventListener('click', async ()=>{ await Promise.all([loadGmail(), loadTasks()]); if(slackChannelsEl.value.trim()) await loadSlack(); });
+
+    // Initial render
+    renderQueue();
+  </script>
+</body>
+</html>

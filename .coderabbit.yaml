@@ -1,0 +1,19 @@
+language: en-US
+reviews:
+  profile: chill
+  high_level_summary: true
+  auto_review:
+    enabled: true
+    drafts: false
+  path_filters:
+    - "app/**"                 # focus reviews on your app code
+    - "!**/__pycache__/**"     # ignore caches
+    - "!**/*.pyc"
+    - "!venv/**"               # ignore virtualenvs
+    - "!**/*.sqlite3"          # ignore local DBs
+    - "!**/.env*"              # ignore env files
+  tools:
+    ruff:
+      enabled: true            # Python lints
+    gitleaks:
+      enabled: true            # secret scanning
