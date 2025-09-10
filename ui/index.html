@@ -19,6 +19,9 @@
     .chip-high { color: #ef4444; border-color: rgba(239,68,68,.4); }
     .divider { height:1px; background: linear-gradient(90deg, transparent, rgba(148,163,184,.2), transparent); }
     .scroll-smooth { scroll-behavior: smooth; }
+    .skeleton { position: relative; overflow: hidden; background: rgba(148,163,184,0.08); }
+    .skeleton::after { content: ""; position:absolute; inset:0; transform: translateX(-100%); background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.08), rgba(255,255,255,0)); animation: shimmer 1.2s infinite; }
+    @keyframes shimmer { 100% { transform: translateX(100%); } }
   </style>
 </head>
 <body class="scroll-smooth">
@@ -94,6 +97,13 @@
           <div class="font-semibold text-lg">Unified Queue</div>
           <div id="queueMeta" class="text-xs text-slate-400"></div>
           <div class="ml-auto flex items-center gap-2">
+            <input id="queueSearch" class="hidden md:block bg-transparent border border-slate-600/60 rounded-lg px-3 py-1.5 text-sm w-56" placeholder="Filter… (press /)" />
+            <select id="queueSort" class="bg-transparent border border-slate-600/60 rounded-lg px-3 py-1.5 text-sm">
+              <option value="score_desc">Sort: Score ↓</option>
+              <option value="score_asc">Score ↑</option>
+              <option value="due_asc">Due ↑</option>
+              <option value="due_desc">Due ↓</option>
+            </select>
             <button id="btnLoadGmail" class="px-3 py-1.5 text-sm rounded-lg bg-rose-600/90 hover:bg-rose-500">Load Gmail</button>
             <button id="btnLoadTasks" class="px-3 py-1.5 text-sm rounded-lg bg-indigo-600/90 hover:bg-indigo-500">Load Tasks</button>
           </div>
@@ -179,6 +189,8 @@
 
     const queueBody = $('#queueBody');
     const queueMeta = $('#queueMeta');
+    const queueSearch = $('#queueSearch');
+    const queueSort = $('#queueSort');
     const countGmail = $('#countGmail');
     const countSlack = $('#countSlack');
     const countTasks = $('#countTasks');
@@ -225,6 +237,8 @@
       tasks: [],
       combined: [],
       selected: null,
+      selectedKey: null,
+      loading: 0,
     };
 
     function toast(msg, ms=1800){
@@ -306,8 +320,21 @@
           raw: t,
         });
       }
-      rows.sort((a,b)=> (b.score||0) - (a.score||0));
-      state.combined = rows;
+      const sort = (queueSort?.value)||'score_desc';
+      rows.sort((a,b)=>{
+        if(sort==='score_asc') return (a.score||0) - (b.score||0);
+        if(sort==='due_asc') return (new Date(a.due||'2099-12-31') - new Date(b.due||'2099-12-31'));
+        if(sort==='due_desc') return (new Date(b.due||'1970-01-01') - new Date(a.due||'1970-01-01'));
+        return (b.score||0) - (a.score||0);
+      });
+      const q = (queueSearch?.value||'').toLowerCase().trim();
+      const filtered = q ? rows.filter(r=>
+        (r.title||'').toLowerCase().includes(q) ||
+        (r.from||'').toLowerCase().includes(q) ||
+        (r.summary||'').toLowerCase().includes(q) ||
+        (r.key||'').toLowerCase().includes(q)
+      ) : rows;
+      state.combined = filtered;
       renderQueue();
     }
 
@@ -326,7 +353,9 @@
       queueBody.innerHTML = '';
       for(const r of state.combined){
         const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-800/40 cursor-pointer';
+        const isSelected = state.selectedKey && state.selectedKey === `${r._type}:${r.id}`;
+        tr.className = `${isSelected ? 'bg-slate-800/60' : 'hover:bg-slate-800/40'} cursor-pointer`;
+        tr.dataset.key = `${r._type}:${r.id}`;
         tr.innerHTML = `
           <td class="px-3 py-2 text-slate-300">${iconFor(r._type)} ${r._type}</td>
           <td class="px-3 py-2">
@@ -343,14 +372,32 @@
         queueBody.appendChild(tr);
       }
       if(!state.combined.length){
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td colspan="5" class="px-3 py-8 text-center text-slate-400">No items yet — click <b>Load Gmail</b>, <b>Load Slack</b>, or <b>Load Tasks</b>.</td>`
-        queueBody.appendChild(tr);
+        if(state.loading>0){
+          for(let i=0;i<5;i++){
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td class="px-3 py-3"><div class="h-4 w-16 rounded skeleton"></div></td>
+              <td class="px-3 py-3">
+                <div class="h-4 w-56 rounded skeleton"></div>
+                <div class="h-3 w-24 mt-2 rounded skeleton"></div>
+              </td>
+              <td class="px-3 py-3"><div class="h-4 w-72 rounded skeleton"></div></td>
+              <td class="px-3 py-3"><div class="h-4 w-28 rounded skeleton"></div></td>
+              <td class="px-3 py-3 text-right"><div class="h-4 w-10 ml-auto rounded skeleton"></div></td>
+            `;
+            queueBody.appendChild(tr);
+          }
+        } else {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td colspan="5" class="px-3 py-8 text-center text-slate-400">No items yet — click <b>Load Gmail</b>, <b>Load Slack</b>, or <b>Load Tasks</b>.</td>`
+          queueBody.appendChild(tr);
+        }
       }
     }
 
     function selectItem(r){
       state.selected = r;
+      state.selectedKey = `${r._type}:${r.id}`;
       detailEmpty.classList.add('hidden');
       detailBody.classList.remove('hidden');
       detailSource.textContent = `${iconFor(r._type)} ${r._type.toUpperCase()}`;
@@ -372,6 +419,8 @@
       } else {
         jiraActions.classList.add('hidden');
       }
+      // re-render to update row highlight
+      renderQueue();
     }
 
     function escapeHtml(str){
@@ -379,28 +428,36 @@
     }
 
     // --- Loads ---
+    function startLoading(){ state.loading++; }
+    function endLoading(){ state.loading = Math.max(0, state.loading-1); }
+
     async function loadGmail(){
       try {
+        startLoading();
         countGmail.textContent = '…';
         const data = await api('/gmail/recent?max_results=10');
         state.gmail = Array.isArray(data) ? data : [];
         toast(`Loaded Gmail: ${state.gmail.length}`);
         unify();
       } catch(err){ toast('Gmail error: '+err.message); }
+      finally { endLoading(); }
     }
 
     async function loadTasks(){
       try {
+        startLoading();
         countTasks.textContent = '…';
         const data = await api('/pm/tasks?limit_per_provider=20&assignee_me=true');
         state.tasks = data?.tasks || [];
         toast(`Loaded Tasks: ${state.tasks.length}`);
         unify();
       } catch(err){ toast('Tasks error: '+err.message); }
+      finally { endLoading(); }
     }
 
     async function loadSlack(){
       try {
+        startLoading();
         countSlack.textContent = '…';
         const chs = (slackChannelsEl.value||'').split(',').map(s=>s.trim()).filter(Boolean);
         if(!chs.length){ toast('Enter Slack channel IDs first'); return; }
@@ -410,6 +467,7 @@
         toast(`Loaded Slack: ${state.slack.length}`);
         unify();
       } catch(err){ toast('Slack error: '+err.message); }
+      finally { endLoading(); }
     }
 
     // --- KB ---
@@ -510,6 +568,25 @@
     btnLoadTasks.addEventListener('click', loadTasks);
     btnLoadSlack.addEventListener('click', loadSlack);
     btnRefreshAll.addEventListener('click', async ()=>{ await Promise.all([loadGmail(), loadTasks()]); if(slackChannelsEl.value.trim()) await loadSlack(); });
+
+    // Search/sort controls
+    queueSearch?.addEventListener('input', ()=> unify());
+    queueSort?.addEventListener('change', ()=> unify());
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === '/' && !e.ctrlKey && !e.metaKey){ e.preventDefault(); queueSearch?.focus(); }
+      if(e.key.toLowerCase() === 'r' && !e.ctrlKey && !e.metaKey){ e.preventDefault(); btnRefreshAll.click(); }
+      if(e.key.toLowerCase() === 'g'){ btnLoadGmail.click(); }
+      if(e.key.toLowerCase() === 't'){ btnLoadTasks.click(); }
+    });
+
+    // Persist Slack channels
+    const savedCh = localStorage.getItem('slackChannels')||'';
+    if(savedCh && !slackChannelsEl.value) slackChannelsEl.value = savedCh;
+    slackChannelsEl.addEventListener('change', ()=>{
+      localStorage.setItem('slackChannels', slackChannelsEl.value.trim());
+    });
 
     // Initial render
     renderQueue();
